@@ -1202,15 +1202,17 @@ html&gt;body{padding:0}&lt;/style&gt;
   }
 
   const wallMaterial = material(&#x27;--muted-foreground&#x27;, 0.82);
-  const wallInsetMaterial = material(&#x27;--muted&#x27;, 0.9);
   const seamlessMaterial = material(&#x27;--viz-series-1&#x27;, 0.86);
-  const compareLow = material(&#x27;--viz-series-2&#x27;, 0.48);
-  const compareMid = material(&#x27;--viz-series-2&#x27;, 0.68);
-  const compareHigh = material(&#x27;--viz-series-2&#x27;, 0.9);
+  const compareMaterials = [
+    material(&#x27;--viz-series-2&#x27;, 0.42),
+    material(&#x27;--viz-series-2&#x27;, 0.54),
+    material(&#x27;--viz-series-2&#x27;, 0.66),
+    material(&#x27;--viz-series-2&#x27;, 0.78),
+    material(&#x27;--viz-series-2&#x27;, 0.9)
+  ];
   const qsrMaterial = material(&#x27;--viz-series-3&#x27;, 0.86);
   const curveMaterial = material(&#x27;--viz-series-4&#x27;, 0.86);
   const hardwareMaterial = material(&#x27;--foreground&#x27;, 0.7);
-  const personMaterial = material(&#x27;--foreground&#x27;, 0.68);
   const edgeMaterial = new THREE.LineBasicMaterial({
     color: threeColor(cssColor(&#x27;--border&#x27;)),
     transparent: true,
@@ -1246,20 +1248,33 @@ html&gt;body{padding:0}&lt;/style&gt;
     null
   );
 
-  function addCabinetGrid({ axis, direction, columns, rows, bottom, surface, materials }) {
-    const cabinetWidth = 0.3375;
-    const cabinetHeight = 0.6;
+  function addCabinetGrid({
+    axis,
+    direction,
+    columns,
+    rows,
+    bottom,
+    surface,
+    materials,
+    orientation = &#x27;portrait&#x27;,
+    columnGap = 0,
+    rowGap = 0,
+    materialBy = &#x27;column&#x27;
+  }) {
+    const cabinetWidth = orientation === &#x27;landscape&#x27; ? 0.6 : 0.3375;
+    const cabinetHeight = orientation === &#x27;landscape&#x27; ? 0.3375 : 0.6;
     const cabinetDepth = 0.035;
     for (let column = 0; column &lt; columns; column += 1) {
       for (let row = 0; row &lt; rows; row += 1) {
         const geometry = axis === &#x27;x&#x27;
           ? new THREE.BoxGeometry(cabinetWidth - 0.01, cabinetHeight - 0.012, cabinetDepth)
           : new THREE.BoxGeometry(cabinetDepth, cabinetHeight - 0.012, cabinetWidth - 0.01);
-        const offset = direction * cabinetWidth * (column + 0.5);
+        const offset = direction * (cabinetWidth / 2 + column * (cabinetWidth + columnGap));
         const position = axis === &#x27;x&#x27;
-          ? new THREE.Vector3(offset, bottom + cabinetHeight * (row + 0.5), surface)
-          : new THREE.Vector3(surface, bottom + cabinetHeight * (row + 0.5), offset);
-        const selectedMaterial = Array.isArray(materials) ? materials[column % materials.length] : materials;
+          ? new THREE.Vector3(offset, bottom + cabinetHeight / 2 + row * (cabinetHeight + rowGap), surface)
+          : new THREE.Vector3(surface, bottom + cabinetHeight / 2 + row * (cabinetHeight + rowGap), offset);
+        const materialIndex = materialBy === &#x27;row&#x27; ? row : column;
+        const selectedMaterial = Array.isArray(materials) ? materials[materialIndex % materials.length] : materials;
         addMeshWithEdges(geometry, selectedMaterial, position, null);
       }
     }
@@ -1277,41 +1292,34 @@ html&gt;body{padding:0}&lt;/style&gt;
     surface: faceOffset, materials: seamlessMaterial
   });
 
+  const compareGap = 0.035;
+  const compareStackHeight = 5 * 0.3375 + 4 * compareGap;
   addCabinetGrid({
-    axis: &#x27;z&#x27;, direction: -1, columns: 3, rows: 3, bottom: ledBottom,
-    surface: faceOffset, materials: [compareLow, compareMid, compareHigh]
+    axis: &#x27;z&#x27;,
+    direction: -1,
+    columns: 1,
+    rows: 5,
+    bottom: (wallHeight - compareStackHeight) / 2,
+    surface: faceOffset,
+    materials: compareMaterials,
+    orientation: &#x27;landscape&#x27;,
+    rowGap: compareGap,
+    materialBy: &#x27;row&#x27;
   });
 
+  const qsrGap = 0.025;
+  const qsrStackHeight = 3 * 0.3375 + 2 * qsrGap;
   addCabinetGrid({
-    axis: &#x27;x&#x27;, direction: -1, columns: 3, rows: 1, bottom: 1.24,
-    surface: faceOffset, materials: qsrMaterial
+    axis: &#x27;x&#x27;,
+    direction: -1,
+    columns: 1,
+    rows: 3,
+    bottom: (wallHeight - qsrStackHeight) / 2,
+    surface: faceOffset,
+    materials: qsrMaterial,
+    orientation: &#x27;landscape&#x27;,
+    rowGap: qsrGap
   });
-
-  const shelf = addMeshWithEdges(
-    new THREE.BoxGeometry(1.02, 0.055, 0.28),
-    hardwareMaterial,
-    new THREE.Vector3(-0.51, 1.05, 0.18),
-    null
-  );
-  shelf.userData.role = &#x27;qsr-shelf&#x27;;
-  addMeshWithEdges(
-    new THREE.BoxGeometry(0.12, 0.22, 0.1),
-    wallInsetMaterial,
-    new THREE.Vector3(-0.75, 1.185, 0.18),
-    null
-  );
-  addMeshWithEdges(
-    new THREE.BoxGeometry(0.14, 0.16, 0.11),
-    wallInsetMaterial,
-    new THREE.Vector3(-0.47, 1.155, 0.18),
-    null
-  );
-  addMeshWithEdges(
-    new THREE.BoxGeometry(0.11, 0.28, 0.1),
-    wallInsetMaterial,
-    new THREE.Vector3(-0.2, 1.215, 0.18),
-    null
-  );
 
   const curveCenterX = -0.9;
   const curveCenterZ = -0.9;
@@ -1349,20 +1357,6 @@ html&gt;body{padding:0}&lt;/style&gt;
   ]);
   scene.add(new THREE.Line(boothGeometry, edgeMaterial));
 
-  function addPersonPart(width, height, depth, x, y, z) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), personMaterial);
-    mesh.position.set(x, y, z);
-    scene.add(mesh);
-  }
-  const personX = 1.23;
-  const personZ = 0.73;
-  addPersonPart(0.11, 0.72, 0.11, personX - 0.075, 0.36, personZ);
-  addPersonPart(0.11, 0.72, 0.11, personX + 0.075, 0.36, personZ);
-  addPersonPart(0.28, 0.58, 0.16, personX, 1.01, personZ);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 20, 14), personMaterial);
-  head.position.set(personX, 1.48, personZ);
-  scene.add(head);
-
   const viewCopy = {
     top: {
       status: &#x27;TOP · Two intersecting walls create four distinct experience corners.&#x27;,
@@ -1373,12 +1367,12 @@ html&gt;body{padding:0}&lt;/style&gt;
       note: &#x27;Three portrait cabinets high keeps the active surface at approximately 1,800mm.&#x27;
     },
     compare: {
-      status: &#x27;COMPARE · Three full-height portrait towers show pitch and resolution differences.&#x27;,
-      note: &#x27;The same content can run across three columns for a true side-by-side eye test.&#x27;
+      status: &#x27;COMPARE · Five landscape cabinets stack vertically with breathing room between them.&#x27;,
+      note: &#x27;Each horizontal panel can carry a different pitch or resolution using the same content.&#x27;
     },
     qsr: {
-      status: &#x27;QSR · A horizontal 1×3 menu-board display sits above a hands-on ledge.&#x27;,
-      note: &#x27;The ledge is integrated into the wall. No separate table or chairs.&#x27;
+      status: &#x27;QSR · Three landscape cabinets stack vertically in a centred 1×3 column.&#x27;,
+      note: &#x27;The complete 600 × 1,062.5mm stack is vertically centred on the wall.&#x27;
     },
     seamless: {
       status: &#x27;90° SEAMLESS · Two portrait-panel walls create the immersive corner.&#x27;,
