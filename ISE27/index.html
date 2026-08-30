@@ -1122,22 +1122,22 @@ html&gt;body{padding:0}&lt;/style&gt;
   &lt;/style&gt;
 
   &lt;h2&gt;Two walls, four corners&lt;/h2&gt;
-  &lt;p class=&quot;fc-subtitle&quot;&gt;Near-full-height cruciform · approximately 2,200mm tall&lt;/p&gt;
+  &lt;p class=&quot;fc-subtitle&quot;&gt;1,750mm rotating diameter · approximately 2,200mm tall&lt;/p&gt;
 
   &lt;div class=&quot;viz-controls fc-controls&quot; aria-label=&quot;Choose experience corner&quot;&gt;
     &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-view=&quot;top&quot; aria-pressed=&quot;false&quot;&gt;Top&lt;/button&gt;
     &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-view=&quot;curve&quot; aria-pressed=&quot;false&quot;&gt;Curve&lt;/button&gt;
     &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-view=&quot;compare&quot; aria-pressed=&quot;false&quot;&gt;Compare&lt;/button&gt;
-    &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-view=&quot;qsr&quot; aria-pressed=&quot;false&quot;&gt;QSR&lt;/button&gt;
-    &lt;button type=&quot;button&quot; class=&quot;btn btn-primary&quot; data-view=&quot;seamless&quot; aria-pressed=&quot;true&quot;&gt;90° Seamless&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn btn-primary&quot; data-view=&quot;qsr&quot; aria-pressed=&quot;true&quot;&gt;QSR&lt;/button&gt;
+    &lt;button type=&quot;button&quot; class=&quot;btn&quot; data-view=&quot;seamless&quot; aria-pressed=&quot;false&quot;&gt;90° Seamless&lt;/button&gt;
   &lt;/div&gt;
 
   &lt;div class=&quot;fc-stage&quot; role=&quot;img&quot; aria-label=&quot;Interactive three-dimensional model of two intersecting full-height booth walls creating four product experience corners&quot;&gt;
     &lt;div class=&quot;fc-hint text-small&quot;&gt;Drag left or right to turn the cruciform&lt;/div&gt;
   &lt;/div&gt;
 
-  &lt;div class=&quot;fc-status&quot; aria-live=&quot;polite&quot;&gt;90° SEAMLESS · Two portrait-panel walls create the immersive corner.&lt;/div&gt;
-  &lt;div class=&quot;fc-note text-small&quot;&gt;The walls run floor to approximately 2,200mm. LED begins around 280mm above the floor.&lt;/div&gt;
+  &lt;div class=&quot;fc-status&quot; aria-live=&quot;polite&quot;&gt;QSR · Four portrait cabinets form a centred 2 × 2 menu-board grid.&lt;/div&gt;
+  &lt;div class=&quot;fc-note text-small&quot;&gt;The four cabinets touch; thin edge lines show the 2 × 2 panel structure.&lt;/div&gt;
 
   &lt;div class=&quot;fc-key&quot; aria-label=&quot;Model legend&quot;&gt;
     &lt;span&gt;&lt;i class=&quot;fc-swatch fc-wall&quot;&gt;&lt;/i&gt;Structural walls&lt;/span&gt;
@@ -1233,7 +1233,7 @@ html&gt;body{padding:0}&lt;/style&gt;
   }
 
   const wallHeight = 2.2;
-  const wallLength = 2.1;
+  const wallLength = 1.75;
   const wallThickness = 0.08;
   addMeshWithEdges(
     new THREE.BoxGeometry(wallLength, wallHeight, wallThickness),
@@ -1268,8 +1268,8 @@ html&gt;body{padding:0}&lt;/style&gt;
     for (let column = 0; column &lt; columns; column += 1) {
       for (let row = 0; row &lt; rows; row += 1) {
         const geometry = axis === &#x27;x&#x27;
-          ? new THREE.BoxGeometry(cabinetWidth - 0.01, cabinetHeight - 0.012, cabinetDepth)
-          : new THREE.BoxGeometry(cabinetDepth, cabinetHeight - 0.012, cabinetWidth - 0.01);
+          ? new THREE.BoxGeometry(cabinetWidth, cabinetHeight, cabinetDepth)
+          : new THREE.BoxGeometry(cabinetDepth, cabinetHeight, cabinetWidth);
         const offset = centerOnArm
           ? direction * (wallLength / 4 + (column - (columns - 1) / 2) * (cabinetWidth + columnGap))
           : direction * (cabinetWidth / 2 + column * (cabinetWidth + columnGap));
@@ -1311,17 +1311,19 @@ html&gt;body{padding:0}&lt;/style&gt;
     centerOnArm: true
   });
 
-  const qsrGap = 0.025;
-  const qsrStackHeight = 3 * 0.3375 + 2 * qsrGap;
+  const qsrGap = 0;
+  const qsrGridHeight = 2 * 0.6;
+  const qsrTop = 2.01;
   addCabinetGrid({
     axis: &#x27;x&#x27;,
     direction: -1,
-    columns: 1,
-    rows: 3,
-    bottom: (wallHeight - qsrStackHeight) / 2,
+    columns: 2,
+    rows: 2,
+    bottom: qsrTop - qsrGridHeight,
     surface: faceOffset,
     materials: qsrMaterial,
-    orientation: &#x27;landscape&#x27;,
+    orientation: &#x27;portrait&#x27;,
+    columnGap: qsrGap,
     rowGap: qsrGap,
     centerOnArm: true
   });
@@ -1336,7 +1338,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     const z = curveCenterZ + curveRadius * Math.sin(theta);
     const rotationY = Math.PI / 2 - theta;
     for (let row = 0; row &lt; 3; row += 1) {
-      const geometry = new THREE.BoxGeometry(0.3275, 0.588, 0.035);
+      const geometry = new THREE.BoxGeometry(0.3375, 0.6, 0.035);
       addMeshWithEdges(
         geometry,
         curveMaterial,
@@ -1362,10 +1364,21 @@ html&gt;body{padding:0}&lt;/style&gt;
   ]);
   scene.add(new THREE.Line(boothGeometry, edgeMaterial));
 
+  const sweepPoints = Array.from({ length: 96 }, (_, index) =&gt; {
+    const angle = (index / 96) * Math.PI * 2;
+    return new THREE.Vector3(
+      Math.cos(angle) * wallLength / 2,
+      0.009,
+      Math.sin(angle) * wallLength / 2
+    );
+  });
+  const sweepGeometry = new THREE.BufferGeometry().setFromPoints(sweepPoints);
+  scene.add(new THREE.LineLoop(sweepGeometry, edgeMaterial));
+
   const viewCopy = {
     top: {
       status: &#x27;TOP · Two intersecting walls create four distinct experience corners.&#x27;,
-      note: &#x27;Booth outline: 3,000 × 2,000mm · wall height: approximately 2,200mm&#x27;
+      note: &#x27;Booth: 3,000 × 2,000mm · rotating cross: 1,750mm diameter · wall height: approximately 2,200mm&#x27;
     },
     curve: {
       status: &#x27;CURVE · Four vertical columns create a faceted 90° curve.&#x27;,
@@ -1376,8 +1389,8 @@ html&gt;body{padding:0}&lt;/style&gt;
       note: &#x27;The stack is centred horizontally and vertically on its wall arm.&#x27;
     },
     qsr: {
-      status: &#x27;QSR · Three landscape cabinets stack vertically in a centred 1×3 column.&#x27;,
-      note: &#x27;The complete 600 × 1,062.5mm stack is centred horizontally and vertically on the wall.&#x27;
+      status: &#x27;QSR · Four portrait cabinets form a centred 2 × 2 menu-board grid.&#x27;,
+      note: &#x27;The flush 675 × 1,200mm grid is raised to align with the Compare stack at 2,010mm.&#x27;
     },
     seamless: {
       status: &#x27;90° SEAMLESS · Two portrait-panel walls create the immersive corner.&#x27;,
@@ -1393,9 +1406,10 @@ html&gt;body{padding:0}&lt;/style&gt;
     top: 0
   };
 
-  let currentRotation = 0;
-  let activeView = &#x27;seamless&#x27;;
+  let currentRotation = targetAngles.qsr;
+  let activeView = &#x27;qsr&#x27;;
   let animationFrame = 0;
+  model.rotation.y = currentRotation;
 
   function setPerspectiveCamera() {
     camera.position.set(3.45, 2.65, 4.35);
