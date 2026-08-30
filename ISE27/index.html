@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Four Corner Wall Model</title>
+<title>Elysium ISE27 Four-Corner Model</title>
 <style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
 </head>
 <body>
-<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Four Corner Wall Model" srcdoc="&lt;!doctype html&gt;
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Elysium ISE27 Four-Corner Model" srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;en&quot; data-visualize-standalone&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;utf-8&quot;&gt;
 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
 &lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
 &lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
-&lt;title&gt;Four Corner Wall Model&lt;/title&gt;
+&lt;title&gt;Elysium ISE27 Four-Corner Model&lt;/title&gt;
 &lt;style&gt;:root {
   color-scheme: light dark;
   background-color: var(
@@ -1259,7 +1259,8 @@ html&gt;body{padding:0}&lt;/style&gt;
     orientation = &#x27;portrait&#x27;,
     columnGap = 0,
     rowGap = 0,
-    materialBy = &#x27;column&#x27;
+    materialBy = &#x27;column&#x27;,
+    centerOnArm = false
   }) {
     const cabinetWidth = orientation === &#x27;landscape&#x27; ? 0.6 : 0.3375;
     const cabinetHeight = orientation === &#x27;landscape&#x27; ? 0.3375 : 0.6;
@@ -1269,7 +1270,9 @@ html&gt;body{padding:0}&lt;/style&gt;
         const geometry = axis === &#x27;x&#x27;
           ? new THREE.BoxGeometry(cabinetWidth - 0.01, cabinetHeight - 0.012, cabinetDepth)
           : new THREE.BoxGeometry(cabinetDepth, cabinetHeight - 0.012, cabinetWidth - 0.01);
-        const offset = direction * (cabinetWidth / 2 + column * (cabinetWidth + columnGap));
+        const offset = centerOnArm
+          ? direction * (wallLength / 4 + (column - (columns - 1) / 2) * (cabinetWidth + columnGap))
+          : direction * (cabinetWidth / 2 + column * (cabinetWidth + columnGap));
         const position = axis === &#x27;x&#x27;
           ? new THREE.Vector3(offset, bottom + cabinetHeight / 2 + row * (cabinetHeight + rowGap), surface)
           : new THREE.Vector3(surface, bottom + cabinetHeight / 2 + row * (cabinetHeight + rowGap), offset);
@@ -1304,7 +1307,8 @@ html&gt;body{padding:0}&lt;/style&gt;
     materials: compareMaterials,
     orientation: &#x27;landscape&#x27;,
     rowGap: compareGap,
-    materialBy: &#x27;row&#x27;
+    materialBy: &#x27;row&#x27;,
+    centerOnArm: true
   });
 
   const qsrGap = 0.025;
@@ -1318,7 +1322,8 @@ html&gt;body{padding:0}&lt;/style&gt;
     surface: faceOffset,
     materials: qsrMaterial,
     orientation: &#x27;landscape&#x27;,
-    rowGap: qsrGap
+    rowGap: qsrGap,
+    centerOnArm: true
   });
 
   const curveCenterX = -0.9;
@@ -1368,11 +1373,11 @@ html&gt;body{padding:0}&lt;/style&gt;
     },
     compare: {
       status: &#x27;COMPARE · Five landscape cabinets stack vertically with breathing room between them.&#x27;,
-      note: &#x27;Each horizontal panel can carry a different pitch or resolution using the same content.&#x27;
+      note: &#x27;The stack is centred horizontally and vertically on its wall arm.&#x27;
     },
     qsr: {
       status: &#x27;QSR · Three landscape cabinets stack vertically in a centred 1×3 column.&#x27;,
-      note: &#x27;The complete 600 × 1,062.5mm stack is vertically centred on the wall.&#x27;
+      note: &#x27;The complete 600 × 1,062.5mm stack is centred horizontally and vertically on the wall.&#x27;
     },
     seamless: {
       status: &#x27;90° SEAMLESS · Two portrait-panel walls create the immersive corner.&#x27;,
