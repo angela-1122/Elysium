@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ElysiumLED ISE 2027 | Kirt Layout Study</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #202124;
+      --panel: #292b2f;
+      --panel-2: #34373c;
+      --text: #f4f4f2;
+      --muted: #a6a9af;
+      --line: rgba(255,255,255,.15);
+      --coral: #ff654f;
+      --blue: #5fc7ff;
+      --green: #91d69a;
+      --violet: #ad93ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Helvetica, Arial, sans-serif;
+    }
+
+    body { padding: 24px; }
+
+    .shell {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--coral);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(25px, 4vw, 42px);
+      line-height: 1.03;
+      font-weight: 500;
+      letter-spacing: -.035em;
+    }
+
+    .subhead {
+      margin: 9px 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 9px 14px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button:hover { background: var(--panel-2); }
+
+    button[aria-pressed="true"] {
+      border-color: var(--coral);
+      background: var(--coral);
+      color: #161616;
+      font-weight: 700;
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      min-height: 560px;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 50% 38%, #414349 0%, #292b2f 43%, #1d1e21 100%);
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .stage.dragging { cursor: grabbing; }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hint {
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      color: rgba(255,255,255,.62);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(260px, .75fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+      padding: 14px 16px;
+    }
+
+    .status {
+      margin: 0 0 5px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .specs {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px 16px;
+      margin: 0;
+      font-size: 12px;
+    }
+
+    .specs dt { color: var(--muted); }
+    .specs dd { margin: 0; text-align: right; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 13px; height: 8px; border-radius: 2px; }
+
+    @media (max-width: 760px) {
+      body { padding: 14px; }
+      .stage { min-height: 500px; aspect-ratio: auto; }
+      .readout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">ElysiumLED · ISE 2027 layout study</p>
+    <h1>One cross. Four proof points.</h1>
+    <p class="subhead">Updated from Kirt's sketches. Drag the model, or select a 90° experience.</p>
+
+    <nav class="toolbar" aria-label="Model views">
+      <button type="button" data-view="overall" aria-pressed="true">Overall</button>
+      <button type="button" data-view="top" aria-pressed="false">Top</button>
+      <button type="button" data-view="seamless" aria-pressed="false">90° SI</button>
+      <button type="button" data-view="single" aria-pressed="false">Single Pro</button>
+      <button type="button" data-view="curves" aria-pressed="false">Convex + Concave</button>
+      <button type="button" data-view="compare" aria-pressed="false">0.9 Pro + Wall of Specs</button>
+      <button type="button" id="rotate" aria-pressed="false">Slow rotation</button>
+    </nav>
+
+    <section class="stage" aria-label="Interactive three-dimensional booth model">
+      <div class="hint">Drag left or right to rotate</div>
+    </section>
+
+    <section class="readout">
+      <div class="card">
+        <p class="status">OVERALL · Kirt's four-quadrant product map</p>
+        <p class="note">The cruciform is the support structure. Each 90° opening carries a different proof point.</p>
+        <div class="legend" aria-label="Model legend">
+          <span><i class="swatch" style="background:#ff654f"></i>90° SI</span>
+          <span><i class="swatch" style="background:#5fc7ff"></i>Single Pro</span>
+          <span><i class="swatch" style="background:#ad93ff"></i>Curves</span>
+          <span><i class="swatch" style="background:#91d69a"></i>0.9 Pro</span>
+          <span><i class="swatch" style="background:#f2b45e"></i>Wall of Specs</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <dl class="specs">
+          <dt>Current overall span</dt><dd>1,600 mm</dd>
+          <dt>Structural thickness</dt><dd>152 mm / 6 in</dd>
+          <dt>Height placeholder</dt><dd>2,200 mm</dd>
+          <dt>Landscape cabinet</dt><dd>600 × 337.5 mm</dd>
+          <dt>2×2 portrait field</dt><dd>675 × 1,200 mm</dd>
+          <dt>Mount allowance</dt><dd>75 mm</dd>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+  (() => {
+    const stage = document.querySelector('.stage');
+    const status = document.querySelector('.status');
+    const note = document.querySelector('.note');
+    const viewButtons = Array.from(document.querySelectorAll('[data-view]'));
+    const rotateButton = document.getElementById('rotate');
+
+    if (!stage || !window.THREE) return;
+
+    const C = {
+      wallSpan: 1.6,
+      wallThickness: 0.1524,
+      wallHeight: 2.2,
+      mountDepth: 0.075,
+      cabinetDepth: 0.032,
+      portraitW: 0.3375,
+      portraitH: 0.6,
+      landscapeW: 0.6,
+      landscapeH: 0.3375,
+      screenBottom: 0.50,
+      comparisonGap: 0.055,
+      curveRadius: 3.0
+    };
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.prepend(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(31, 1, 0.1, 100);
+    const model = new THREE.Group();
+    scene.add(model);
+
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x17181b, 1.5);
+    scene.add(hemi);
+
+    const key = new THREE.DirectionalLight(0xffffff, 1.15);
+    key.position.set(3.5, 6, 4.5);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0x86bfff, 0.42);
+    fill.position.set(-4, 3, -2);
+    scene.add(fill);
+
+    const mats = {
+      wall: new THREE.MeshStandardMaterial({ color: 0x383b40, roughness: 0.7, metalness: 0.22 }),
+      edge: new THREE.LineBasicMaterial({ color: 0x111214, transparent: true, opacity: 0.84 }),
+      mount: new THREE.MeshStandardMaterial({ color: 0x101114, roughness: 0.48, metalness: 0.7 }),
+      seamless: new THREE.MeshStandardMaterial({ color: 0xff654f, emissive: 0x5c130a, emissiveIntensity: 0.55, roughness: 0.32 }),
+      single: new THREE.MeshStandardMaterial({ color: 0x5fc7ff, emissive: 0x103c59, emissiveIntensity: 0.55, roughness: 0.30 }),
+      curveA: new THREE.MeshStandardMaterial({ color: 0xad93ff, emissive: 0x291f57, emissiveIntensity: 0.55, roughness: 0.32, side: THREE.DoubleSide }),
+      curveB: new THREE.MeshStandardMaterial({ color: 0x7b5ee1, emissive: 0x1c1644, emissiveIntensity: 0.52, roughness: 0.32, side: THREE.DoubleSide }),
+      pro09: new THREE.MeshStandardMaterial({ color: 0x91d69a, emissive: 0x173f20, emissiveIntensity: 0.45, roughness: 0.31 }),
+      spec1: new THREE.MeshStandardMaterial({ color: 0xf2b45e, emissive: 0x4f2b08, emissiveIntensity: 0.48, roughness: 0.34 }),
+      spec2: new THREE.MeshStandardMaterial({ color: 0xe89a51, emissive: 0x482108, emissiveIntensity: 0.48, roughness: 0.34 }),
+      spec3: new THREE.MeshStandardMaterial({ color: 0xd77b4e, emissive: 0x401609, emissiveIntensity: 0.48, roughness: 0.34 }),
+      spec4: new THREE.MeshStandardMaterial({ color: 0xc75c51, emissive: 0x3e1010, emissiveIntensity: 0.48, roughness: 0.34 }),
+      floor: new THREE.MeshStandardMaterial({ color: 0x232529, roughness: 0.92, metalness: 0.02 })
+    };
+
+    function addEdges(mesh, parent = model) {
+      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 18), mats.edge);
+      edges.position.copy(mesh.position);
+      edges.rotation.copy(mesh.rotation);
+      edges.scale.copy(mesh.scale);
+      parent.add(edges);
+      return edges;
+    }
+
+    function box(w, h, d, material, x, y, z, parent = model, edges = true) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      if (edges) addEdges(mesh, parent);
+      return mesh;
+    }
+
+    // Two intersecting structural blades.
+    box(C.wallSpan, C.wallHeight, C.wallThickness, mats.wall, 0, C.wallHeight / 2, 0);
+    box(C.wallThickness, C.wallHeight, C.wallSpan, mats.wall, 0, C.wallHeight / 2, 0);
+
+    const armInner = C.wallThickness / 2;
+    const armOuter = C.wallSpan / 2;
+    const usableArm = armOuter - armInner;
+
+    function armCenter(direction) {
+      return direction * (armInner + usableArm / 2);
+    }
+
+    function addBacking(axis, alongDirection, faceSign, width, height, bottom) {
+      const along = armCenter(alongDirection);
+      const normal = faceSign * (C.wallThickness / 2 + C.mountDepth / 2);
+      if (axis === 'x') {
+        box(width, height, C.mountDepth, mats.mount, along, bottom + height / 2, normal, model, false);
+      } else {
+        box(C.mountDepth, height, width, mats.mount, normal, bottom + height / 2, along, model, false);
+      }
+    }
+
+    function addGrid({
+      axis,
+      alongDirection,
+      faceSign,
+      columns,
+      rows,
+      orientation,
+      bottom,
+      material,
+      rowGap = 0,
+      columnGap = 0,
+      backing = true
+    }) {
+      const cabinetW = orientation === 'landscape' ? C.landscapeW : C.portraitW;
+      const cabinetH = orientation === 'landscape' ? C.landscapeH : C.portraitH;
+      const totalW = columns * cabinetW + (columns - 1) * columnGap;
+      const totalH = rows * cabinetH + (rows - 1) * rowGap;
+      const center = armCenter(alongDirection);
+      const surface = faceSign * (C.wallThickness / 2 + C.mountDepth + C.cabinetDepth / 2);
+
+      if (backing) addBacking(axis, alongDirection, faceSign, totalW + 0.018, totalH + 0.018, bottom - 0.009);
+
+      for (let c = 0; c < columns; c += 1) {
+        for (let r = 0; r < rows; r += 1) {
+          const along = center + (c - (columns - 1) / 2) * (cabinetW + columnGap);
+          const y = bottom + cabinetH / 2 + r * (cabinetH + rowGap);
+          const selected = Array.isArray(material) ? material[r % material.length] : material;
+          const seam = 0.006;
+          if (axis === 'x') {
+            box(cabinetW - seam, cabinetH - seam, C.cabinetDepth, selected, along, y, surface);
+          } else {
+            box(C.cabinetDepth, cabinetH - seam, cabinetW - seam, selected, surface, y, along);
+          }
+        }
+      }
+    }
+
+    // QUADRANT 1: +X / +Z. Two 2x2 portrait fields form the 90-degree SI corner.
+    addGrid({
+      axis: 'x', alongDirection: 1, faceSign: 1,
+      columns: 2, rows: 2, orientation: 'portrait',
+      bottom: C.screenBottom, material: mats.seamless
+    });
+    addGrid({
+      axis: 'z', alongDirection: 1, faceSign: 1,
+      columns: 2, rows: 2, orientation: 'portrait',
+      bottom: C.screenBottom, material: mats.seamless
+    });
+
+    // QUADRANT 2: +X / -Z. One intentionally isolated landscape Pro cabinet.
+    const singleBottom = (C.wallHeight - C.landscapeH) / 2;
+    addGrid({
+      axis: 'x', alongDirection: 1, faceSign: -1,
+      columns: 1, rows: 1, orientation: 'landscape',
+      bottom: singleBottom, material: mats.single
+    });
+
+    // QUADRANT 4: -X / +Z. 0.9 Pro field on one face; four separated comparisons on the other.
+    addGrid({
+      axis: 'x', alongDirection: -1, faceSign: 1,
+      columns: 2, rows: 2, orientation: 'portrait',
+      bottom: C.screenBottom, material: mats.pro09
+    });
+
+    const specHeight = 4 * C.landscapeH + 3 * C.comparisonGap;
+    addGrid({
+      axis: 'z', alongDirection: 1, faceSign: -1,
+      columns: 1, rows: 4, orientation: 'landscape',
+      bottom: (C.wallHeight - specHeight) / 2,
+      material: [mats.spec4, mats.spec3, mats.spec2, mats.spec1],
+      rowGap: C.comparisonGap,
+      backing: false
+    });
+
+    // QUADRANT 3: -X / -Z. Two shallow, opposing curve samples bridge the open corner.
+    function curvedRibbon(yCenter, bow, material) {
+      const start = new THREE.Vector2(-armOuter + 0.012, -armInner - 0.015);
+      const end = new THREE.Vector2(-armInner - 0.015, -armOuter + 0.012);
+      const dx = end.x - start.x;
+      const dz = end.y - start.y;
+      const length = Math.hypot(dx, dz);
+      const nx = -dz / length;
+      const nz = dx / length;
+      const segments = 28;
+      const h = C.landscapeH;
+      const positions = [];
+      const indices = [];
+
+      for (let i = 0; i <= segments; i += 1) {
+        const t = i / segments;
+        const offset = bow * 4 * t * (1 - t);
+        const x = start.x + dx * t + nx * offset;
+        const z = start.y + dz * t + nz * offset;
+        positions.push(x, yCenter - h / 2, z);
+        positions.push(x, yCenter + h / 2, z);
+      }
+
+      for (let i = 0; i < segments; i += 1) {
+        const a = i * 2;
+        indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      model.add(mesh);
+
+      const outline = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 15), mats.edge);
+      model.add(outline);
+
+      const pointMaterial = mats.mount;
+      box(0.07, h + 0.04, 0.07, pointMaterial, start.x, yCenter, start.y, model, false);
+      box(0.07, h + 0.04, 0.07, pointMaterial, end.x, yCenter, end.y, model, false);
+    }
+
+    // Opposing bows are intentionally subtle, approximating a large-radius demonstration.
+    curvedRibbon(1.48, 0.040, mats.curveA);
+    curvedRibbon(0.86, -0.040, mats.curveB);
+
+    // Central swivel hardware remains visible as a concept placeholder.
+    const hub = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.26, 0.085, 48),
+      mats.mount
+    );
+    hub.position.y = 0.043;
+    hub.castShadow = true;
+    model.add(hub);
+
+    // 3m x 2m booth footprint and a quiet floor plane.
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(3, 2), mats.floor);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.008;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const boothLine = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-1.5, 0.004, -1),
+        new THREE.Vector3(1.5, 0.004, -1),
+        new THREE.Vector3(1.5, 0.004, 1),
+        new THREE.Vector3(-1.5, 0.004, 1),
+        new THREE.Vector3(-1.5, 0.004, -1)
+      ]),
+      new THREE.LineBasicMaterial({ color: 0xff654f, transparent: true, opacity: 0.55 })
+    );
+    scene.add(boothLine);
+
+    const grid = new THREE.GridHelper(8, 32, 0x4b4e54, 0x34363a);
+    grid.position.y = -0.014;
+    scene.add(grid);
+
+    const copy = {
+      overall: {
+        status: "OVERALL · Kirt's four-quadrant product map",
+        note: 'The cruciform is the support structure. Each 90° opening carries a different proof point.'
+      },
+      top: {
+        status: 'TOP · Four deliberately different 90° experiences',
+        note: 'Current study uses a 1,600 mm cross inside the 3,000 × 2,000 mm booth footprint.'
+      },
+      seamless: {
+        status: '90° SI · Eight portrait cabinets wrap the corner',
+        note: 'One 2×2 portrait field per face. Each face measures 675 × 1,200 mm.'
+      },
+      single: {
+        status: 'SINGLE PRO · One landscape cabinet, intentionally isolated',
+        note: 'One 600 × 337.5 mm cabinet becomes the hands-on product and construction story.'
+      },
+      curves: {
+        status: 'CURVES · One convex and one concave partial bridge the opening',
+        note: 'The opposing samples are stacked vertically and modeled with a subtle large-radius bow.'
+      },
+      compare: {
+        status: 'COMPARE · 0.9 Pro meets the Wall of Specs',
+        note: 'One face is a flush 2×2 portrait field. The other is four separate landscape samples with visible space.'
+      }
+    };
+
+    const angles = {
+      overall: -0.14,
+      seamless: 0,
+      single: Math.PI / 2,
+      curves: Math.PI,
+      compare: -Math.PI / 2,
+      top: 0
+    };
+
+    function setPerspective() {
+      camera.position.set(3.55, 2.75, 4.65);
+      camera.lookAt(0, 1.05, 0);
+    }
+
+    function setTop() {
+      camera.position.set(0.001, 6.2, 0.001);
+      camera.lookAt(0, 0, 0);
+    }
+
+    setPerspective();
+    let currentRotation = angles.overall;
+    let targetRotation = currentRotation;
+    let activeView = 'overall';
+    let autoRotate = false;
+    let dragging = false;
+    let lastX = 0;
+
+    model.rotation.y = currentRotation;
+
+    function selectView(view) {
+      activeView = view;
+      if (view === 'top') setTop(); else setPerspective();
+      targetRotation = angles[view];
+      viewButtons.forEach(button => {
+        const selected = button.dataset.view === view;
+        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+      status.textContent = copy[view].status;
+      note.textContent = copy[view].note;
+    }
+
+    viewButtons.forEach(button => {
+      button.addEventListener('click', () => selectView(button.dataset.view));
+    });
+
+    rotateButton.addEventListener('click', () => {
+      autoRotate = !autoRotate;
+      rotateButton.setAttribute('aria-pressed', autoRotate ? 'true' : 'false');
+      if (autoRotate && activeView === 'top') selectView('overall');
+    });
+
+    renderer.domElement.addEventListener('pointerdown', event => {
+      if (activeView === 'top') selectView('overall');
+      dragging = true;
+      autoRotate = false;
+      rotateButton.setAttribute('aria-pressed', 'false');
+      lastX = event.clientX;
+      stage.classList.add('dragging');
+      renderer.domElement.setPointerCapture(event.pointerId);
+    });
+
+    renderer.domElement.addEventListener('pointermove', event => {
+      if (!dragging) return;
+      currentRotation += (event.clientX - lastX) * 0.011;
+      targetRotation = currentRotation;
+      lastX = event.clientX;
+      model.rotation.y = currentRotation;
+      status.textContent = 'FREE VIEW · Turn the cross by hand';
+      note.textContent = 'Choose a named corner to snap back to Kirt’s layout.';
+      viewButtons.forEach(button => button.setAttribute('aria-pressed', 'false'));
+    });
+
+    function endDrag(event) {
+      if (!dragging) return;
+      dragging = false;
+      stage.classList.remove('dragging');
+      if (renderer.domElement.hasPointerCapture(event.pointerId)) {
+        renderer.domElement.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    renderer.domElement.addEventListener('pointerup', endDrag);
+    renderer.domElement.addEventListener('pointercancel', endDrag);
+
+    function resize() {
+      const width = Math.max(1, stage.clientWidth);
+      const height = Math.max(1, stage.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    let previous = performance.now();
+    function animate(now) {
+      const dt = Math.min(0.05, (now - previous) / 1000);
+      previous = now;
+      if (autoRotate) {
+        currentRotation += dt * 0.16;
+        targetRotation = currentRotation;
+      } else if (!dragging) {
+        let delta = (targetRotation - currentRotation) % (Math.PI * 2);
+        if (delta > Math.PI) delta -= Math.PI * 2;
+        if (delta < -Math.PI) delta += Math.PI * 2;
+        currentRotation += delta * Math.min(1, dt * 7.2);
+      }
+      model.rotation.y = currentRotation;
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  })();
+  </script>
+</body>
+</html>
